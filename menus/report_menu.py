@@ -6,14 +6,16 @@ from services import report_service
 
 console = Console()
 
+report_color = "#e76f51"
+
 def report_menu(connection):
     console.clear()
 
     console.print(
         Panel(
-            "[bold cyan]PERSONAL FINANCE TRACKER - REPORT MENU[/bold cyan]\n"
-            "[dim]Manage your reports[/dim]",
-            border_style="cyan",
+            f"[bold {report_color}]PERSONAL FINANCE TRACKER - REPORT MENU[/bold {report_color}]\n"
+            "Manage your reports",
+            border_style=f"{report_color}",
             padding=1
         )
     )

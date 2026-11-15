@@ -11,15 +11,17 @@ from menus.report_menu import report_menu
 
 console = Console()
 
+main_color = "#264653"
+
 def main_menu(connection):
     while True:
         console.clear()
 
         console.print(
             Panel(
-                "[bold green]PERSONAL FINANCE TRACKER[/bold green]\n"
-                "[dim]Manage your accounts, transactions, and budgets[/dim]",
-                border_style="green",
+                f"[bold {main_color}]PERSONAL FINANCE TRACKER[/bold {main_color}]\n"
+                "Manage your accounts, transactions, and budgets",
+                border_style=f"{main_color}",
                 padding=1
             )
         )
@@ -78,5 +80,6 @@ def main():
             connection.close()
             console.print("[dim]Database connection closed.[/dim]")
 
+# change back to just main() when able to connect to database
 if __name__ == "__main__":
-    main_menu("test")
+    main()

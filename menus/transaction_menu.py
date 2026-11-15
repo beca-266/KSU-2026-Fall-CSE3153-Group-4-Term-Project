@@ -6,14 +6,16 @@ from services import transaction_service
 
 console = Console()
 
+transaction_color = "#e9c46a"
+
 def transaction_menu(connection):
     console.clear()
 
     console.print(
         Panel(
-            "[bold cyan]PERSONAL FINANCE TRACKER - TRANSACTION MENU[/bold cyan]\n"
-            "[dim]Manage your transactions[/dim]",
-            border_style="cyan",
+            f"[bold {transaction_color}]PERSONAL FINANCE TRACKER - TRANSACTION MENU[/bold {transaction_color}]\n"
+            "Manage your transactions",
+            border_style=f"{transaction_color}",
             padding=1
         )
     )

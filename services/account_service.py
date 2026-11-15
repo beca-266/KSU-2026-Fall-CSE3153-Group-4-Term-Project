@@ -23,7 +23,7 @@ def get_account_balance(connection, account_id: int) -> Decimal | None:
 
     """
     Retrieve an account's current balance.
-    Returns a dictionary, or None if the account does not exist.
+    Returns a decimal, or None if the account does not exist.
     """
     pass
 

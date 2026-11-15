@@ -6,14 +6,16 @@ from services import budget_service
 
 console = Console()
 
+budget_color = "#f4a261"
+
 def budget_menu(connection):
     console.clear()
 
     console.print(
         Panel(
-            "[bold cyan]PERSONAL FINANCE TRACKER - BUDGET MENU[/bold cyan]\n"
-            "[dim]Manage your budgets[/dim]",
-            border_style="cyan",
+            f"[bold {budget_color}]PERSONAL FINANCE TRACKER - BUDGET MENU[/bold {budget_color}]\n"
+            "Manage your budgets",
+            border_style=f"{budget_color}",
             padding=1
         )
     )
