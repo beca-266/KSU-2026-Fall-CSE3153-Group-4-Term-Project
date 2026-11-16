@@ -6,7 +6,7 @@ from services import transaction_service
 
 console = Console()
 
-transaction_color = "#e9c46a"
+transaction_color = "#34435E"
 
 def transaction_menu(connection):
     console.clear()

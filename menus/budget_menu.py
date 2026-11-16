@@ -6,7 +6,7 @@ from services import budget_service
 
 console = Console()
 
-budget_color = "#f4a261"
+budget_color = "#D8D2E1"
 
 def budget_menu(connection):
     console.clear()

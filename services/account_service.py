@@ -35,6 +35,42 @@ def get_accounts(connection) -> list[dict]:
     finally:
         cursor.close()
 
+def get_account(connection, account_id: int) -> dict | None:
+    """
+    Retrieves a single account.
+
+    Should return:
+    account id
+    account name
+    account type
+    account balance
+    created at
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT account_id,
+            account_name,
+            account_type,
+            account_balance,
+            created_at
+        FROM tracker.Accounts
+        WHERE account_id = ?;
+        """, account_id)
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        columns = [column[0] for column in cursor.description]
+        return dict(zip(columns, row))
+
+    finally:
+        cursor.close()
+
 def add_account(connection, account_name: str, account_type: str, account_balance: float = 0.00) -> int | None:
     """
     Create a new account.
@@ -45,13 +81,13 @@ def add_account(connection, account_name: str, account_type: str, account_balanc
 
     try:
         cursor.execute("""
-            INSERT INTO tracker.Accounts (
-                account_name, 
-                account_type, 
-                account_balance
-            )
-            OUTPUT INSERTED.account_id
-            VALUES (?, ?, ?);
+        INSERT INTO tracker.Accounts (
+            account_name, 
+            account_type, 
+            account_balance
+        )
+        OUTPUT INSERTED.account_id
+        VALUES (?, ?, ?);
         """, (account_name, account_type, account_balance))
 
         account_id = cursor.fetchone()[0]
@@ -59,6 +95,28 @@ def add_account(connection, account_name: str, account_type: str, account_balanc
         connection.commit()
 
         return account_id
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+
+def delete_account(connection, account_id: int) -> None:
+    """
+    Deletes the specified account.
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        DELETE FROM tracker.Accounts 
+        WHERE account_id = ?;
+        """, (account_id,))
+
+        connection.commit()
 
     except Exception:
         connection.rollback()
@@ -113,21 +171,21 @@ def get_account_transactions(connection, account_id: int) -> list[dict]:
 
     try:
         cursor.execute("""
-            SELECT
-                t.transaction_id,
-                t.transaction_amount,
-                t.transaction_date,
-                t.transaction_description,
-                c.category_name,
-                c.category_type,
-                m.merchant_name
-            FROM tracker.Transactions AS t
-            INNER JOIN tracker.Categories AS c
-                ON t.category_id = c.category_id
-            LEFT JOIN tracker.Merchants AS m
-                ON t.merchant_id = m.merchant_id
-            WHERE t.account_id = ?
-            ORDER BY t.transaction_date DESC;
+        SELECT
+            t.transaction_id,
+            t.transaction_amount,
+            t.transaction_date,
+            t.transaction_description,
+            c.category_name,
+            c.category_type,
+            m.merchant_name
+        FROM tracker.Transactions AS t
+        INNER JOIN tracker.Categories AS c
+            ON t.category_id = c.category_id
+        LEFT JOIN tracker.Merchants AS m
+            ON t.merchant_id = m.merchant_id
+        WHERE t.account_id = ?
+        ORDER BY t.transaction_date DESC;
         """, (account_id,))
 
         columns = [column[0] for column in cursor.description]
@@ -138,21 +196,57 @@ def get_account_transactions(connection, account_id: int) -> list[dict]:
     finally:
         cursor.close()
 
-def get_categories(connection, category_type: str = None) -> list[dict]:
+def get_account_categories(connection, account_id: int) -> list[dict]:
     """
-    Retrieve available categories.
-    Optionally filter by 'Income' or 'Expense' (not necessarily required, but should not be hard to implement)
-    Returns a list of category records.
+    Retrieve available categories used by an account.
     """
-    pass
 
     cursor = connection.cursor()
 
-def get_merchants(connection) -> list[dict]:
+    try:
+        cursor.execute("""
+        SELECT DISTINCT
+            c.category_id,
+            c.category_name,
+            c.category_type
+        FROM tracker.Categories AS c
+        INNER JOIN tracker.Transactions AS t
+            ON t.category_id = c.category_id
+        WHERE t.account_id = ?
+        ORDER BY c.category_type, c.category_name;
+        """, (account_id,))
+
+        columns = [column[0] for column in cursor.description]
+        rows = cursor.fetchall()
+
+        return [dict(zip(columns, row))for row in rows]
+
+    finally:
+        cursor.close()
+
+def get_account_merchants(connection, account_id: int) -> list[dict]:
     """
-    Retrieve all available merchants.
-    Returns a list of merchant records.
+    Retrieve all distinct merchants used by an account.
     """
-    pass
 
     cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT DISTINCT
+            m.merchant_id,
+            m.merchant_name
+        FROM tracker.Merchants AS m
+        INNER JOIN tracker.Transactions AS t
+            ON m.merchant_id = t.merchant_id
+        WHERE t.account_id = ?
+        ORDER BY m.merchant_name;
+        """, (account_id,))
+
+        columns = [column[0] for column in cursor.description]
+        rows = cursor.fetchall()
+
+        return [dict(zip(columns, row))for row in rows]
+
+    finally:
+        cursor.close()
