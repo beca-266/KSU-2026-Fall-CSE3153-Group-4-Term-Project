@@ -297,7 +297,7 @@ def get_account_transactions(connection):
             formatted_amount = (
                 f"[green]+${amount:.2f}[/green]"
                 if is_income
-                else f"[red]+${amount:.2f}[/red]"
+                else f"[red]-${amount:.2f}[/red]"
             )
 
             table.add_row(

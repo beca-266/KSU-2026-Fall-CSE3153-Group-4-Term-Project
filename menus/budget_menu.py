@@ -260,6 +260,29 @@ def calculate_remaining_budget_prompt(connection):
     try:
         remaining_budget = budget_service.get_budget_remaining(connection, selected_budget)
 
+        if remaining_budget is None:
+            console.print("[red]Budget not found.[/red]")
+            return
+
+        remaining = remaining_budget["remaining"]
+
+        display_budget_color = "green" if remaining > 0 else "red"
+
+        console.print()
+
+        console.print(
+            Panel(
+                f"""
+[bold]Monthly Limit:[/bold]  ${remaining_budget['monthly_limit']:,.2f}
+[bold]Amount Spent:[/bold]   ${remaining_budget['amount_spent']:,.2f}
+[bold]Remaining:[/bold]      [{display_budget_color}]${remaining:,.2f}[/{display_budget_color}]
+                """,
+                title=f"[bold {budget_color}]BUDGET OVERVIEW[/bold {budget_color}]",
+                border_style=budget_color,
+                expand=False
+            )
+        )
+
     except Exception as error:
         console.print(error)
 
