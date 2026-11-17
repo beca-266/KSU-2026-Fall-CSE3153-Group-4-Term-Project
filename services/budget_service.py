@@ -137,9 +137,7 @@ def get_budgets(connection, account_id: int = None, month: int = None, year: int
     finally:
         cursor.close()
 
-def get_budget_remaining(connection, account_id: int, category_id: int, month: int, year: int) -> dict | None:
-    cursor = connection.cursor()
-
+def get_budget_remaining(connection, budget_id) -> dict | None:
     """
     Calculate a category's budget limit, amount spent,
     and remaining amount for a specific month.
@@ -147,7 +145,8 @@ def get_budget_remaining(connection, account_id: int, category_id: int, month: i
 
     Basically tally all transactions for this month for this category for a net amount.
     """
-    pass
+
+    cursor = connection.cursor()
 
 def fetch_months(connection) -> list[int]:
     """

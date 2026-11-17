@@ -45,7 +45,7 @@ def budget_menu(connection):
             get_budget_prompt(connection)
 
         elif choice == "Calculate Remaining Budget":
-            pass
+            calculate_remaining_budget_prompt(connection)
 
 def set_budget_prompt(connection):
     console.clear()
@@ -211,5 +211,56 @@ def get_budget_prompt(connection):
             )
 
         console.print(table)
+
+    questionary.text("\nPress Enter to return to the budgets menu.", qmark="").ask()
+
+def calculate_remaining_budget_prompt(connection):
+    console.clear()
+
+    console.print(
+        Panel(
+            f"[bold {budget_color}]REMAINING BUDGET LIMIT[/bold {budget_color}]\n"
+            "View the remaining limit for a specific budget",
+            border_style=f"{budget_color}",
+            padding=1
+        )
+    )
+
+    account_id = menu_utils.select_account(connection)
+
+    if account_id is None:
+        return
+
+    budgets = budget_service.get_budgets(connection, account_id, None, None)
+
+    if not budgets:
+        console.print("\n[yellow]No budgets found for this account...[/yellow]")
+
+    choices = [
+        questionary.Choice(
+            title=(
+                f"#{budget['budget_id']} | "
+                f"{budget['budget_month']}/{budget['budget_year']} | "
+                f"{budget['account_name']} | "
+                f"{budget['category_name']} | "
+                f"${budget['monthly_limit']:,.2f}"
+            ),
+            value=budget["budget_id"],
+        )
+        for budget in budgets
+    ]
+
+    selected_budget = questionary.select(
+        "Select a budget:",
+        choices=choices,
+        qmark="",
+        pointer="❯"
+    ).ask()
+
+    try:
+        budget_service.get_budget_remaining(connection, selected_budget["budget_id"])
+
+    except Exception as error:
+        console.print(error)
 
     questionary.text("\nPress Enter to return to the budgets menu.", qmark="").ask()
