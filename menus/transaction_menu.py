@@ -26,7 +26,6 @@ def transaction_menu(connection):
             "Add Transaction",
             "Delete Transaction",
             "Update Transaction",
-            "Get Transactions",
             "Back"
         ],
         qmark="",

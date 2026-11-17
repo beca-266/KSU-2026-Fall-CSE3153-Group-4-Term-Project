@@ -148,6 +148,36 @@ def get_budget_remaining(connection, budget_id) -> dict | None:
 
     cursor = connection.cursor()
 
+    try:
+        cursor.execute("""
+        SELECT
+            b.budget_id,
+            b.monthly_limit,
+            COALESCE(SUM(t.transaction_amount), 0) AS amount_spent,
+            b.monthly_limit - COALESCE(SUM(t.transaction_amount), 0) AS remaining
+        FROM tracker.Budgets AS b
+        LEFT JOIN tracker.Transactions AS t
+            ON t.account_id = b.account_id
+            AND t.category_id = b.category_id
+            AND MONTH(t.transaction_date) = b.budget_month
+            AND YEAR(t.transaction_date) = b.budget_year
+        WHERE b.budget_id = ?
+        GROUP BY b.budget_id, b.monthly_limit;
+        """, (budget_id,))
+
+        row = cursor.fetchone()
+
+        if row is None:
+            connection.rollback()
+            return None
+
+        columns = [column[0] for column in cursor.description]
+
+        return dict(zip(columns, row))
+
+    finally:
+        cursor.close()
+
 def fetch_months(connection) -> list[int]:
     """
     Fetches all valid months.

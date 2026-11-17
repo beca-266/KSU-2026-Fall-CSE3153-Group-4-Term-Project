@@ -258,7 +258,7 @@ def calculate_remaining_budget_prompt(connection):
     ).ask()
 
     try:
-        budget_service.get_budget_remaining(connection, selected_budget["budget_id"])
+        remaining_budget = budget_service.get_budget_remaining(connection, selected_budget)
 
     except Exception as error:
         console.print(error)
