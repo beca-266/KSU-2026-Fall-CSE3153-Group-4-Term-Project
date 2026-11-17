@@ -224,6 +224,61 @@ def get_account_categories(connection, account_id: int) -> list[dict]:
     finally:
         cursor.close()
 
+def get_categories(connection) -> list[dict]:
+    """
+    Retrieve all available categories.
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT DISTINCT
+            category_id,
+            category_name,
+            category_type
+        FROM tracker.Categories
+        ORDER BY category_type, category_name;
+        """)
+
+        columns = [column[0] for column in cursor.description]
+        rows = cursor.fetchall()
+
+        return [dict(zip(columns, row))for row in rows]
+
+    finally:
+        cursor.close()
+
+def create_category(connection, category_name, category_type) -> int | None:
+    """
+    Creates a new category with the specified name and type, returning the id.
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        INSERT INTO tracker.Categories (
+            category_name,
+            category_type
+        )
+        OUTPUT INSERTED.category_id
+        VALUES (?, ?);
+        """, (category_name, category_type))
+
+        category_id = cursor.fetchone()[0]
+
+        connection.commit()
+
+        return category_id
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+
 def get_account_merchants(connection, account_id: int) -> list[dict]:
     """
     Retrieve all distinct merchants used by an account.

@@ -6,6 +6,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from services import account_service
+from menus import menu_utils
 
 console = Console()
 
@@ -99,7 +100,7 @@ def get_account_message(connection):
 
         console.print(table)
 
-    questionary.text("\nPress Enter to return to the accounts menu.").ask()
+    questionary.text("\nPress Enter to return to the accounts menu.", qmark="").ask()
 
 def add_account_prompt(connection):
     console.clear()
@@ -174,7 +175,7 @@ def add_account_prompt(connection):
     except Exception as error:
         console.print(f"\n[bold red]Failed to create account:[/bold red] {error}")
 
-    questionary.text("\nPress Enter to return to the accounts menu.").ask()
+    questionary.text("\nPress Enter to return to the accounts menu.", qmark="").ask()
 
 def delete_account_prompt(connection):
     console.clear()
@@ -188,7 +189,7 @@ def delete_account_prompt(connection):
         )
     )
 
-    account_id = select_account(connection)
+    account_id = menu_utils.select_account(connection)
 
     if account_id is None:
         return
@@ -241,7 +242,7 @@ def delete_account_prompt(connection):
             except Exception as error:
                 console.print(f"\n[red]Failed to delete account:[/red] {error}")
 
-    questionary.text("\nPress Enter to return to the accounts menu.").ask()
+    questionary.text("\nPress Enter to return to the accounts menu.", qmark="").ask()
 
 def get_account_transactions(connection):
     console.clear()
@@ -255,7 +256,7 @@ def get_account_transactions(connection):
         )
     )
 
-    account_id = select_account(connection)
+    account_id = menu_utils.select_account(connection)
 
     if account_id is None:
         return
@@ -310,7 +311,7 @@ def get_account_transactions(connection):
 
         console.print(table)
 
-    questionary.text("\nPress Enter to return to the accounts menu.").ask()
+    questionary.text("\nPress Enter to return to the accounts menu.", qmark="").ask()
 
 def get_account_categories(connection):
     console.clear()
@@ -324,7 +325,7 @@ def get_account_categories(connection):
         )
     )
 
-    account_id = select_account(connection)
+    account_id = menu_utils.select_account(connection)
 
     if account_id is None:
         return
@@ -369,7 +370,7 @@ def get_account_categories(connection):
 
         console.print(table)
 
-    questionary.text("\nPress Enter to return to the accounts menu.").ask()
+    questionary.text("\nPress Enter to return to the accounts menu.", qmark="").ask()
 
 def get_account_merchants(connection):
     console.clear()
@@ -383,7 +384,7 @@ def get_account_merchants(connection):
         )
     )
 
-    account_id = select_account(connection)
+    account_id = menu_utils.select_account(connection)
 
     if account_id is None:
         return
@@ -421,28 +422,4 @@ def get_account_merchants(connection):
 
         console.print(table)
 
-    questionary.text("\nPress Enter to return to the accounts menu.").ask()
-
-# Account Selection Helper
-def select_account(connection):
-    accounts = account_service.get_accounts(connection)
-
-    if not accounts:
-        console.print("\n[yellow]No accounts available.[/yellow]")
-        questionary.text("Press Enter to continue.").ask()
-        return None
-
-    choices = [
-        questionary.Choice(
-            title=f"{account['account_name']} ({account['account_type']})",
-            value=account["account_id"],
-        )
-        for account in accounts
-    ]
-
-    return questionary.select(
-        "Select an account:",
-        choices=choices,
-        qmark="",
-        pointer="❯"
-    ).ask()
+    questionary.text("\nPress Enter to return to the accounts menu.", qmark="").ask()
