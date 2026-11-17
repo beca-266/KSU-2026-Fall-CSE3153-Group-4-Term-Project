@@ -24,7 +24,8 @@ def get_connection():
         connection_string = (
             "Server=localhost;"
             "Database=CSE3153_Group4_Finance_Tracker;"
-            "Trusted_Connection=True;"
+            "Trusted_Connection=yes;"
+            "TrustServerCertificate=yes;"
         )
 
     return connect(connection_string)
