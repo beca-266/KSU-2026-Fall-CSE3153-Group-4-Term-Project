@@ -5,12 +5,10 @@ def set_budget(connection, account_id: int, category_id: int, monthly_limit: flo
     Returns the budget object
 
     Should return:
-    budget*
+    b.*
     account name
     category name
     """
-
-    cursor = connection.cursor()
 
 def get_budgets(connection, account_id: int = None, month: int = None, year: int = None) -> list[dict]:
     """
@@ -27,8 +25,6 @@ def get_budgets(connection, account_id: int = None, month: int = None, year: int
     budget year
     """
 
-    cursor = connection.cursor()
-
 def get_budget_remaining(connection, budget_id) -> dict | None:
     """
     Calculate a category's budget limit, amount spent,
@@ -40,37 +36,9 @@ def get_budget_remaining(connection, budget_id) -> dict | None:
     Should return:
     budget id
     monthly limit
-    COALESCED amount spent
-    COALESCED remaining
+    COALESCE transaction amount AS amount spent
+    monthly limit - COALESCE transaction amount AS amount spent
 
     Group by:
     budget id, monthly limit
     """
-
-    cursor = connection.cursor()
-
-def fetch_months(connection) -> list[int]:
-    """
-    Fetches all valid months.
-
-    Should return:
-    DISTINCT budget month
-
-    Order by:
-    budget month asc
-    """
-
-    cursor = connection.cursor()
-
-def fetch_years(connection) -> list[int]:
-    """
-    Fetches all valid years.
-
-    Should return:
-    DISTINCT budget year
-
-    Order by:
-    budget year asc
-    """
-
-    cursor = connection.cursor()
