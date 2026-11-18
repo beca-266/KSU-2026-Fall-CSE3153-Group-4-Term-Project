@@ -117,6 +117,78 @@ def create_category_prompt(connection):
     except Exception as error:
         console.print(f"\n[bold red]Failed to create category:[/bold red] {error}")
 
+# Merchant Selection Helper
+def select_merchant(connection):
+    merchants = account_service.get_merchants(connection)
+
+    if not merchants:
+        console.print("\n[yellow]No merchants available.[/yellow]")
+        questionary.text("Press Enter to create one.", qmark="").ask()
+
+        return create_merchant_prompt(connection)
+
+    choices = [
+        questionary.Choice(
+            title=f"{merchant['merchant_name']}",
+            value=merchant["merchant_id"],
+        )
+        for merchant in merchants
+    ]
+
+    choices.append(questionary.Choice(
+        title="Save a new merchant",
+        value=-1
+    ))
+
+    choice = questionary.select(
+        "Select a merchant or save a new one:",
+        choices=choices,
+        qmark="",
+        pointer="❯"
+    ).ask()
+
+    if choice == -1:
+        return create_merchant_prompt(connection)
+    else:
+        return choice
+
+# Create Category Prompt
+def create_merchant_prompt(connection):
+    console.print("\n[bold]Follow the prompts below to save a new merchant.[/bold]")
+
+    merchant_name = questionary.text(
+        "Merchant name:",
+        validate=lambda value: (
+            "Category name cannot be empty."
+            if not (len(value.strip()) > 0)
+            else "Category name cannot be over 100 characters."
+            if not (len(value.strip()) < 100)
+            else True
+        )
+    ).ask()
+
+    if merchant_name is None:
+        return
+
+    try:
+        merchant_id = account_service.create_merchant(connection, merchant_name.strip())
+
+        console.print(
+            Panel(
+                f"[bold green]Merchant saved successfully![/bold green]\n\n"
+                f"Category ID: {merchant_id}\n"
+                f"Category Name: {merchant_name.strip()}\n",
+                border_style="green",
+                padding=1
+            )
+        )
+
+        questionary.text("\nPress Enter to continue with this merchant.", qmark="").ask()
+        return merchant_id
+
+    except Exception as error:
+        console.print(f"\n[bold red]Failed to save merchant:[/bold red] {error}")
+
 # Budget Month and Year Selection Helpers
 def select_month(connection) -> int | None:
     months = budget_service.fetch_months(connection)

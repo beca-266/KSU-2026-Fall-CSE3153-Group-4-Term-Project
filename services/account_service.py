@@ -279,6 +279,35 @@ def create_category(connection, category_name, category_type) -> int | None:
     finally:
         cursor.close()
 
+def create_merchant(connection, merchant_name) -> int | None:
+    """
+    Creates a new merchant with the specified name, returning the id.
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        INSERT INTO tracker.Merchants (
+            merchant_name
+        )
+        OUTPUT INSERTED.merchant_id
+        VALUES (?);
+        """, merchant_name)
+
+        merchant_id = cursor.fetchone()[0]
+
+        connection.commit()
+
+        return merchant_id
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+
 def get_account_merchants(connection, account_id: int) -> list[dict]:
     """
     Retrieve all distinct merchants used by an account.
@@ -302,6 +331,30 @@ def get_account_merchants(connection, account_id: int) -> list[dict]:
         rows = cursor.fetchall()
 
         return [dict(zip(columns, row))for row in rows]
+
+    finally:
+        cursor.close()
+
+def get_merchants(connection) -> list[dict] | None:
+    """
+        Retrieve all merchants.
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT DISTINCT 
+            merchant_id,
+            merchant_name
+        FROM tracker.Merchants 
+        ORDER BY merchant_id;
+        """)
+
+        columns = [column[0] for column in cursor.description]
+        rows = cursor.fetchall()
+
+        return [dict(zip(columns, row)) for row in rows]
 
     finally:
         cursor.close()
