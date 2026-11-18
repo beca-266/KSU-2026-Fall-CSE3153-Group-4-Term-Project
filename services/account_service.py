@@ -1,56 +1,95 @@
 from decimal import Decimal
 
 def get_accounts(connection) -> list[dict]:
-    cursor = connection.cursor()
-
     """
     Retrieve all accounts.
     Returns a list of account records.
+
+    Should return:
+    account id
+    account name
+    account type
+    account balance
+    created at
+
+    Order by:
+    account id
     """
-    pass
 
-def add_account(connection, account_name: str, account_type: str, starting_balance: float = 0.00) -> int | None:
-    cursor = connection.cursor()
+def get_account(connection, account_id: int) -> dict | None:
+    """
+    Retrieves a single account.
 
+    Should return:
+    account id
+    account name
+    account type
+    account balance
+    created at
+    """
+
+def add_account(connection, account_name: str, account_type: str, account_balance: Decimal = Decimal(0.00)) -> int | None:
     """
     Create a new account.
     Returns the new account ID, or 'None' if unsuccessful.
+
+    Should return:
+    account id
     """
-    pass
 
+def delete_account(connection, account_id: int) -> None:
+    """
+    Deletes the specified account.
+    """
+
+# Keeping temporarily in case needed later
 def get_account_balance(connection, account_id: int) -> Decimal | None:
-    cursor = connection.cursor()
-
     """
     Retrieve an account's current balance.
     Returns a decimal, or None if the account does not exist.
+
+    Should return:
+    account balance
     """
-    pass
 
 def get_account_transactions(connection, account_id: int) -> list[dict]:
-    cursor = connection.cursor()
-
     """
     Retrieve all transactions belonging to a specific account.
     Returns a list of transaction records.
-    """
-    pass
 
-def get_categories(connection, category_type: str = None) -> list[dict]:
-    cursor = connection.cursor()
+    Should return:
+    transaction id
+    transaction amount
+    transaction description
+    category name
+    category type
+    merchant name
 
+    Order by:
+    transaction id DESC
     """
-    Retrieve available categories.
-    Optionally filter by 'Income' or 'Expense' (not necessarily required, but should not be hard to implement)
-    Returns a list of category records.
-    """
-    pass
 
-def get_merchants(connection) -> list[dict]:
-    cursor = connection.cursor()
+def get_account_categories(connection, account_id: int) -> list[dict]:
+    """
+    Retrieve available categories used by an account.
 
+    Should return:
+    category id
+    category name
+    category type
+
+    Order by:
+    category type, category name
     """
-    Retrieve all available merchants.
-    Returns a list of merchant records.
+
+def get_account_merchants(connection, account_id: int) -> list[dict]:
     """
-    pass
+    Retrieve all distinct merchants used by an account.
+
+    Should return:
+    merchant id
+    merchant name
+
+    Order by:
+    merchant name
+    """
