@@ -71,7 +71,7 @@ def get_account(connection, account_id: int) -> dict | None:
     finally:
         cursor.close()
 
-def add_account(connection, account_name: str, account_type: str, account_balance: float = 0.00) -> int | None:
+def add_account(connection, account_name: str, account_type: str, account_balance: Decimal = Decimal(0.00)) -> int | None:
     """
     Create a new account.
     Returns the new account ID, or 'None' if unsuccessful.
@@ -185,7 +185,7 @@ def get_account_transactions(connection, account_id: int) -> list[dict]:
         LEFT JOIN tracker.Merchants AS m
             ON t.merchant_id = m.merchant_id
         WHERE t.account_id = ?
-        ORDER BY t.transaction_date DESC;
+        ORDER BY t.transaction_id DESC;
         """, (account_id,))
 
         columns = [column[0] for column in cursor.description]
@@ -224,90 +224,6 @@ def get_account_categories(connection, account_id: int) -> list[dict]:
     finally:
         cursor.close()
 
-def get_categories(connection) -> list[dict]:
-    """
-    Retrieve all available categories.
-    """
-
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("""
-        SELECT DISTINCT
-            category_id,
-            category_name,
-            category_type
-        FROM tracker.Categories
-        ORDER BY category_type, category_name;
-        """)
-
-        columns = [column[0] for column in cursor.description]
-        rows = cursor.fetchall()
-
-        return [dict(zip(columns, row))for row in rows]
-
-    finally:
-        cursor.close()
-
-def create_category(connection, category_name, category_type) -> int | None:
-    """
-    Creates a new category with the specified name and type, returning the id.
-    """
-
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("""
-        INSERT INTO tracker.Categories (
-            category_name,
-            category_type
-        )
-        OUTPUT INSERTED.category_id
-        VALUES (?, ?);
-        """, (category_name, category_type))
-
-        category_id = cursor.fetchone()[0]
-
-        connection.commit()
-
-        return category_id
-
-    except Exception:
-        connection.rollback()
-        raise
-
-    finally:
-        cursor.close()
-
-def create_merchant(connection, merchant_name) -> int | None:
-    """
-    Creates a new merchant with the specified name, returning the id.
-    """
-
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("""
-        INSERT INTO tracker.Merchants (
-            merchant_name
-        )
-        OUTPUT INSERTED.merchant_id
-        VALUES (?);
-        """, merchant_name)
-
-        merchant_id = cursor.fetchone()[0]
-
-        connection.commit()
-
-        return merchant_id
-
-    except Exception:
-        connection.rollback()
-        raise
-
-    finally:
-        cursor.close()
-
 def get_account_merchants(connection, account_id: int) -> list[dict]:
     """
     Retrieve all distinct merchants used by an account.
@@ -331,30 +247,6 @@ def get_account_merchants(connection, account_id: int) -> list[dict]:
         rows = cursor.fetchall()
 
         return [dict(zip(columns, row))for row in rows]
-
-    finally:
-        cursor.close()
-
-def get_merchants(connection) -> list[dict] | None:
-    """
-        Retrieve all merchants.
-    """
-
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("""
-        SELECT DISTINCT 
-            merchant_id,
-            merchant_name
-        FROM tracker.Merchants 
-        ORDER BY merchant_id;
-        """)
-
-        columns = [column[0] for column in cursor.description]
-        rows = cursor.fetchall()
-
-        return [dict(zip(columns, row)) for row in rows]
 
     finally:
         cursor.close()

@@ -80,7 +80,6 @@ def get_account_message(connection):
 
     else:
         table = Table(
-            border_style=account_color,
             header_style=f"bold {account_color}",
             show_lines=True
         )
