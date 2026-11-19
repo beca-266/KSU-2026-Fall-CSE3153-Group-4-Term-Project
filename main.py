@@ -11,7 +11,7 @@ from menus.report_menu import report_menu
 
 console = Console()
 
-main_color = "#264653"
+main_color = "#E3D888"
 
 def main_menu(connection):
     while True:
