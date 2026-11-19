@@ -6,7 +6,7 @@ from services import report_service
 
 console = Console()
 
-report_color = "#e76f51"
+report_color = "#B88E8D"
 
 def report_menu(connection):
     console.clear()
