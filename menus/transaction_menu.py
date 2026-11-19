@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 import questionary
 from rich.console import Console
@@ -230,6 +231,7 @@ def update_transaction_prompt(connection):
     transaction_description = None
 
     updated_merchant = False
+    updated_account = False
 
     while True:
         console.clear()
@@ -244,6 +246,7 @@ def update_transaction_prompt(connection):
         )
 
         display_transaction(
+            connection,
             transaction,
             account_id,
             category_id,
@@ -251,7 +254,8 @@ def update_transaction_prompt(connection):
             transaction_amount,
             transaction_date,
             transaction_description,
-            updated_merchant
+            updated_merchant,
+            updated_account
         )
 
         choice = questionary.select(
@@ -270,37 +274,82 @@ def update_transaction_prompt(connection):
             pointer="❯"
         ).ask()
 
-    try:
-        transaction = transaction_service.update_transaction(
-            connection,
-            transaction_id,
-            account_id,
-            category_id,
-            transaction_amount,
-            transaction_date,
-            merchant_id,
-            transaction_description
-        )
+        if choice == "Cancel Changes" or choice is None:
+            return
 
-        console.print(
-            Panel(
-                f"[bold green]Transaction saved successfully![/bold green]\n\n"
-                f"Transaction ID: {transaction["transaction_id"]}\n"
-                f"Account Name: {transaction["account_name"]}\n"
-                f"Category Name: {transaction["category_name"]}\n"
-                f"Merchant Name: {transaction.get('merchant_name') or 'N/A'}\n"
-                f"Transaction Amount: ${transaction["transaction_amount"]:,.2f}\n"
-                f"Transaction Date: {datetime.strftime(transaction["transaction_date"], "%B %d, %Y, %I:%M:%S %p")}\n"
-                f"Transaction Description: {transaction.get('transaction_description') or 'N/A'}\n",
-            border_style="green",
-                padding=1
-            )
-        )
+        elif choice == "Change Transaction Account":
+            account_id = menu_utils.select_account(connection)
 
-    except Exception as error:
-        console.print(f"\n[bold red]Failed to save transaction:[/bold red] {error}")
+            if account_id is None:
+                return
 
-    questionary.text("\nPress Enter to return to the transactions menu.", qmark="").ask()
+            updated_account = True
+
+        elif choice == "Change Transaction Category":
+            category_id = menu_utils.select_category(connection)
+
+            if category_id is None:
+                return
+
+        elif choice == "Update Transaction Merchant":
+            merchant_id = menu_utils.select_merchant(connection)
+
+            if merchant_id is None:
+                return
+
+            updated_merchant = True
+
+        elif choice == "Update Transaction Amount":
+            transaction_amount = get_transaction_amount(connection)
+
+        elif choice == "Update Transaction Date":
+            transaction_date_input = get_transaction_date(connection)
+
+            try:
+                transaction_date = datetime.strptime(
+                    transaction_date_input,
+                    "%m/%d/%Y"
+                )
+            except ValueError:
+                console.print("[red]Invalid date. Please use MM/DD/YYYY.[/red]")
+                return
+
+        elif choice == "Update Transaction Description":
+            transaction_description = get_transaction_description(connection)
+
+        elif choice == "Submit Changes and Update Transaction":
+            try:
+                transaction = transaction_service.update_transaction(
+                    connection,
+                    transaction_id,
+                    account_id,
+                    category_id,
+                    transaction_amount,
+                    transaction_date,
+                    merchant_id,
+                    transaction_description
+                )
+
+                console.print(
+                    Panel(
+                        f"[bold green]Transaction updated successfully![/bold green]\n\n"
+                        f"Transaction ID: {transaction["transaction_id"]}\n"
+                        f"Account Name: {transaction["account_name"]}\n"
+                        f"Category Name: {transaction["category_name"]}\n"
+                        f"Merchant Name: {transaction.get('merchant_name') or 'N/A'}\n"
+                        f"Transaction Amount: ${transaction["transaction_amount"]:,.2f}\n"
+                        f"Transaction Date: {datetime.strftime(transaction["transaction_date"], "%B %d, %Y, %I:%M:%S %p")}\n"
+                        f"Transaction Description: {transaction.get('transaction_description') or 'N/A'}\n",
+                    border_style="green",
+                        padding=1
+                    )
+                )
+
+                questionary.text("\nPress Enter to return to the transactions menu.", qmark="").ask()
+                return
+
+            except Exception as error:
+                console.print(f"\n[bold red]Failed to save transaction:[/bold red] {error}")
 
 # Util functions to reduce redundancy
 def get_transaction_amount(connection):
@@ -328,25 +377,30 @@ def get_transaction_description(connection):
     ).ask()
 
 # Transaction Display Helper
-def display_transaction(transaction, account_id, category_id, merchant_id, transaction_amount, transaction_date, transaction_description, updated_merchant):
+def display_transaction(connection, transaction, account_id, category_id, merchant_id, transaction_amount, transaction_date, transaction_description, updated_merchant, updated_account):
     is_income = transaction["category_type"] == "Income"
+
+    if category_id is not None:
+        category = services_utils.get_category_name(connection, category_id)
+
+        is_income = category["category_type"] == "Income"
 
     display_account = (
         transaction["account_name"]
-        if account_id is None
-        else f"[yellow]{account_id}[/yellow]"
+        if updated_account is False
+        else f"[yellow]{services_utils.get_account_name(connection, account_id)}[/yellow]"
     )
 
     display_category = (
         transaction["category_name"]
         if category_id is None
-        else f"[yellow]{category_id}[/yellow]"
+        else f"[yellow]{category["category_name"]}[/yellow]"
     )
 
     display_merchant = (
         transaction["merchant_name"] or "N/A"
         if updated_merchant is False
-        else f"[yellow]{merchant_id}[/yellow]"
+        else f"[yellow]{services_utils.get_merchant_name(connection, merchant_id)}[/yellow]"
     )
 
     display_amount = (
@@ -356,27 +410,27 @@ def display_transaction(transaction, account_id, category_id, merchant_id, trans
     )
 
     display_date = (
-        transaction["transaction_date"]
+        transaction["transaction_date"].strftime("%m/%d/%Y")
         if transaction_date is None
-        else transaction_date
+        else f"[yellow]{transaction_date.strftime("%m/%d/%Y")}[/yellow]"
     )
 
     display_description = (
         transaction["transaction_description"] or "N/A"
         if transaction_description is None
-        else transaction_description
+        else f"[yellow]{transaction_description}[/yellow]"
     )
 
     formatted_amount = (
-        f"[green]+${display_amount:.2f}[/green]"
+        f"[green]+${Decimal(display_amount):.2f}[/green]"
         if is_income
-        else f"[red]-${display_amount:.2f}[/red]"
+        else f"[red]-${Decimal(display_amount):.2f}[/red]"
     )
 
     if transaction_amount is not None:
         formatted_amount = f"[yellow]{formatted_amount}[/yellow]"
 
-    table = Table(title="Current Transaction", show_header=True)
+    table = Table(title="Current Transaction", border_style=transaction_color, show_header=True)
 
     table.add_column("ID", justify="center")
     table.add_column("Account")
@@ -389,7 +443,7 @@ def display_transaction(transaction, account_id, category_id, merchant_id, trans
     table.add_row(
         str(transaction["transaction_id"]),
         display_account,
-        display_date.strftime("%m/%d/%Y"),
+        display_date,
         display_category,
         display_merchant,
         display_description,

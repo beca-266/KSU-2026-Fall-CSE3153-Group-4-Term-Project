@@ -195,3 +195,67 @@ def get_transaction(connection, transaction_id: int) -> dict | None:
     columns = [column[0] for column in cursor.description]
 
     return dict(zip(columns, row))
+
+def get_account_name(connection, account_id):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT DISTINCT account_name
+        FROM tracker.Accounts
+        WHERE account_id = ?
+        """, (account_id,))
+
+        row = cursor.fetchone()
+
+        return row[0]
+
+    except Exception:
+        raise
+
+    finally:
+        cursor.close()
+
+def get_merchant_name(connection, merchant_id):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT DISTINCT merchant_name
+        FROM tracker.Merchants
+        WHERE merchant_id = ?
+        """, (merchant_id,))
+
+        row = cursor.fetchone()
+
+        return row[0]
+
+    except Exception:
+        raise
+
+    finally:
+        cursor.close()
+
+def get_category_name(connection, category_id) -> dict:
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+        SELECT DISTINCT 
+            category_name,
+            category_type
+        FROM tracker.Categories
+        WHERE category_id = ?
+        """, (category_id,))
+
+        row = cursor.fetchone()
+
+        columns = [column[0] for column in cursor.description]
+
+        return dict(zip(columns, row))
+
+    except Exception:
+        raise
+
+    finally:
+        cursor.close()
