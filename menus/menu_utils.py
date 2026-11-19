@@ -231,8 +231,8 @@ def select_month(connection) -> int | None:
 
     choices = [
         questionary.Choice(
-            title=f"Budget Month {month[0]}",
-            value=month[0],
+            title=f"Budget Month {month}",
+            value=month,
         )
         for month in months
     ]
@@ -254,8 +254,8 @@ def select_year(connection) -> int | None:
 
     choices = [
         questionary.Choice(
-            title=f"Budget Year {year[0]}",
-            value=year[0],
+            title=f"Budget Year {year}",
+            value=year,
         )
         for year in years
     ]
