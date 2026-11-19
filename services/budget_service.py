@@ -56,7 +56,7 @@ def set_budget(connection, account_id: int, category_id: int, monthly_limit: flo
             """
             SELECT b.*, 
                 a.account_name, 
-                c.category_name, 
+                c.category_name 
             FROM tracker.Budgets b
             INNER JOIN tracker.Accounts a
                 ON b.account_id = a.account_id
