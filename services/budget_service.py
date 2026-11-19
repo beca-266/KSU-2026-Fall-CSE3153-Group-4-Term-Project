@@ -1,6 +1,3 @@
-from calendar import month
-
-
 def set_budget(connection, account_id: int, category_id: int, monthly_limit: float, month: int, year: int) -> dict | None:
     """
     Creates or updates a budget for an account and category
@@ -16,16 +13,16 @@ def set_budget(connection, account_id: int, category_id: int, monthly_limit: flo
     cursor = connection.cursor()
 
     try:
-
         cursor.execute(
             """
-        SELECT budget_id
-        FROM tracker.Budgets
-        WHERE account_id = ? AND category_id = ? 
-            AND budget_month = ? 
-            AND budget_year = ?
-        """, 
-        (account_id, category_id, month, year)
+            SELECT budget_id
+            FROM tracker.Budgets
+            WHERE account_id = ? 
+                AND category_id = ? 
+                AND budget_month = ? 
+                AND budget_year = ?
+            """,
+            (account_id, category_id, month, year)
         )
 
         existing_budget = cursor.fetchone()
@@ -43,9 +40,13 @@ def set_budget(connection, account_id: int, category_id: int, monthly_limit: flo
         else:
             cursor.execute(
                 """
-                INSERT INTO tracker.Budgets
-                    (account_id, category_id, monthly_limit,
-                    budget_month, budget_year)
+                INSERT INTO tracker.Budgets (
+                    account_id, 
+                    category_id, 
+                    monthly_limit,
+                    budget_month, 
+                    budget_year
+                )
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (account_id, category_id, monthly_limit, month, year)
@@ -53,12 +54,9 @@ def set_budget(connection, account_id: int, category_id: int, monthly_limit: flo
 
         cursor.execute(
             """
-            SELECT b.budget_id, 
+            SELECT b.*, 
                 a.account_name, 
                 c.category_name, 
-                b.monthly_limit, 
-                b.budget_month, 
-                b.budget_year
             FROM tracker.Budgets b
             INNER JOIN tracker.Accounts a
                 ON b.account_id = a.account_id
@@ -100,8 +98,9 @@ def get_budgets(connection, account_id: int = None, month: int = None, year: int
 
     cursor = connection.cursor()
 
-    query =  """
-        SELECT b.budget_id, 
+    query = """
+        SELECT 
+            b.budget_id, 
             a.account_name, 
             c.category_name, 
             b.monthly_limit, 
@@ -112,7 +111,8 @@ def get_budgets(connection, account_id: int = None, month: int = None, year: int
             ON b.account_id = a.account_id
         INNER JOIN tracker.Categories c
             ON b.category_id = c.category_id
-"""
+    """
+
     conditions = []
     parameters = []
 
@@ -131,12 +131,22 @@ def get_budgets(connection, account_id: int = None, month: int = None, year: int
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
 
-    cursor.execute(query, tuple(parameters))
+    query += " ORDER BY b.budget_month, b.budget_year"
 
-    columns = [column[0] for column in cursor.description]
-    rows = cursor.fetchall()
+    try:
+        cursor.execute(query, parameters)
 
-    return [dict(zip(columns, row)) for row in rows]
+        columns = [column[0] for column in cursor.description]
+        rows = cursor.fetchall()
+
+        return [dict(zip(columns, row)) for row in rows]
+
+    except Exception as error:
+        print(error)
+        raise
+
+    finally:
+        cursor.close()
 
 def get_budget_remaining(connection, budget_id) -> dict | None:
     """
@@ -158,72 +168,32 @@ def get_budget_remaining(connection, budget_id) -> dict | None:
 
     cursor = connection.cursor()
 
-    cursor.execute(
-        """
-        SELECT b.budget_id, 
-            b.monthly_limit, 
+    try:
+        cursor.execute("""
+        SELECT
+            b.budget_id,
+            b.monthly_limit,
             COALESCE(SUM(t.transaction_amount), 0) AS amount_spent,
-            b.monthly_limit - COALESCE(SUM(t.transaction_amount), 0) 
-                AS remaining
-        FROM tracker.Budgets b
-        LEFT JOIN tracker.Transactions t
-            ON b.account_id = t.account_id 
-            AND b.category_id = t.category_id 
-            AND MONTH(t.transaction_date) = b.budget_month 
+            b.monthly_limit - COALESCE(SUM(t.transaction_amount), 0) AS remaining
+        FROM tracker.Budgets AS b
+        LEFT JOIN tracker.Transactions AS t
+            ON t.account_id = b.account_id
+            AND t.category_id = b.category_id
+            AND MONTH(t.transaction_date) = b.budget_month
             AND YEAR(t.transaction_date) = b.budget_year
         WHERE b.budget_id = ?
-        GROUP BY b.budget_id, b.monthly_limit
-        """,
-        (budget_id,)
-    )
+        GROUP BY b.budget_id, b.monthly_limit;
+        """, (budget_id,))
 
-    columns = [column[0] for column in cursor.description]
-    row = cursor.fetchone()
+        row = cursor.fetchone()
 
-    return dict(zip(columns, row)) if row is not None else None
+        if row is None:
+            connection.rollback()
+            return None
 
-def fetch_months(connection) -> list[int]:
-    """
-    Fetches all valid months.
+        columns = [column[0] for column in cursor.description]
 
-    Should return:
-    DISTINCT budget month
+        return dict(zip(columns, row))
 
-    Order by:
-    budget month asc
-    """
-
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT DISTINCT budget_month
-        FROM tracker.Budgets 
-        ORDER BY budget_month ASC
-        """
-    )
-
-    return [row[0] for row in cursor.fetchall()]
-
-def fetch_years(connection) -> list[int]:
-    """
-    Fetches all valid years.
-
-    Should return:
-    DISTINCT budget year
-
-    Order by:
-    budget year asc
-    """
-
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT DISTINCT budget_year
-        FROM tracker.Budgets 
-        ORDER BY budget_year ASC
-        """
-    )
-
-    return [row[0] for row in cursor.fetchall()]
+    finally:
+        cursor.close()
