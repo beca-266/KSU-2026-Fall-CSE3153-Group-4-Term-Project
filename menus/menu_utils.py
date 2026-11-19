@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from services import account_service
-from services import budget_service
+from services import services_utils
 
 console = Console()
 
@@ -33,7 +33,7 @@ def select_account(connection):
 
 # Category Selection Helper
 def select_category(connection):
-    categories = account_service.get_categories(connection)
+    categories = services_utils.get_categories(connection)
 
     if not categories:
         console.print("\n[yellow]No categories available.[/yellow]")
@@ -98,7 +98,7 @@ def create_category_prompt(connection):
         return
 
     try:
-        category_id = account_service.create_category(connection, category_name.strip(), category_type)
+        category_id = services_utils.create_category(connection, category_name.strip(), category_type)
 
         console.print(
             Panel(
@@ -119,7 +119,7 @@ def create_category_prompt(connection):
 
 # Merchant Selection Helper
 def select_merchant(connection):
-    merchants = account_service.get_merchants(connection)
+    merchants = services_utils.get_merchants(connection)
 
     if not merchants:
         console.print("\n[yellow]No merchants available.[/yellow]")
@@ -171,7 +171,7 @@ def create_merchant_prompt(connection):
         return
 
     try:
-        merchant_id = account_service.create_merchant(connection, merchant_name.strip())
+        merchant_id = services_utils.create_merchant(connection, merchant_name.strip())
 
         console.print(
             Panel(
@@ -189,9 +189,40 @@ def create_merchant_prompt(connection):
     except Exception as error:
         console.print(f"\n[bold red]Failed to save merchant:[/bold red] {error}")
 
+# Transaction Selection Helper
+def select_transaction(connection, account_id):
+    transactions = account_service.get_account_transactions(connection, account_id)
+
+    if not transactions:
+        console.print("\n[yellow]No transactions available.[/yellow]")
+        questionary.text("Press Enter to continue.", qmark="").ask()
+        return None
+
+    choices = [
+        questionary.Choice(
+            title=(
+                f"#{transaction['transaction_id']} | "
+                f"{transaction['category_type']} | "
+                f"{transaction['transaction_date'].strftime('%m/%d/%Y')} | "
+                f"{transaction['category_name']} | "
+                f"${transaction['transaction_amount']:,.2f} | "
+                f"{transaction['merchant_name'] or 'N/A'}"
+            ),
+            value=transaction["transaction_id"],
+        )
+        for transaction in transactions
+    ]
+
+    return questionary.select(
+        "Select a transaction:",
+        choices=choices,
+        qmark="",
+        pointer="❯"
+    ).ask()
+
 # Budget Month and Year Selection Helpers
 def select_month(connection) -> int | None:
-    months = budget_service.fetch_months(connection)
+    months = services_utils.fetch_months(connection)
 
     if not months:
         console.print("\n[yellow]No months available.[/yellow]")
@@ -213,9 +244,8 @@ def select_month(connection) -> int | None:
         pointer="❯"
     ).ask()
 
-
 def select_year(connection) -> int | None:
-    years = budget_service.fetch_years(connection)
+    years = services_utils.fetch_years(connection)
 
     if not years:
         console.print("\n[yellow]No years available.[/yellow]")
