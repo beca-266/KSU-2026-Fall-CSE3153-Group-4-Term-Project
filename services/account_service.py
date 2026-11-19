@@ -16,8 +16,6 @@ def get_accounts(connection) -> list[dict]:
     account id
     """
 
-    cursor = connection.cursor()
-
 def get_account(connection, account_id: int) -> dict | None:
     """
     Retrieves a single account.
@@ -30,31 +28,29 @@ def get_account(connection, account_id: int) -> dict | None:
     created at
     """
 
-    cursor = connection.cursor()
-
-def add_account(connection, account_name: str, account_type: str, account_balance: float = 0.00) -> int | None:
+def add_account(connection, account_name: str, account_type: str, account_balance: Decimal = Decimal(0.00)) -> int | None:
     """
     Create a new account.
     Returns the new account ID, or 'None' if unsuccessful.
-    """
 
-    cursor = connection.cursor()
+    Should return:
+    account id
+    """
 
 def delete_account(connection, account_id: int) -> None:
     """
     Deletes the specified account.
     """
 
-    cursor = connection.cursor()
-
 # Keeping temporarily in case needed later
 def get_account_balance(connection, account_id: int) -> Decimal | None:
     """
     Retrieve an account's current balance.
     Returns a decimal, or None if the account does not exist.
-    """
 
-    cursor = connection.cursor()
+    Should return:
+    account balance
+    """
 
 def get_account_transactions(connection, account_id: int) -> list[dict]:
     """
@@ -70,10 +66,8 @@ def get_account_transactions(connection, account_id: int) -> list[dict]:
     merchant name
 
     Order by:
-    transaction date DESC
+    transaction id DESC
     """
-
-    cursor = connection.cursor()
 
 def get_account_categories(connection, account_id: int) -> list[dict]:
     """
@@ -85,38 +79,17 @@ def get_account_categories(connection, account_id: int) -> list[dict]:
     category type
 
     Order by:
-    category type
-    category name
+    category type, category name
     """
-
-    cursor = connection.cursor()
-
-def get_categories(connection) -> list[dict]:
-    """
-    Retrieve all available categories.
-
-    Should return:
-    DISTINCT
-    category id
-    category name
-    category type
-
-    Order by:
-    category_type, category_name
-    """
-
-    cursor = connection.cursor()
-
-def create_category(connection, category_name, category_type) -> int | None:
-    """
-    Creates a new category with the specified name and type, returning the id.
-    """
-
-    cursor = connection.cursor()
 
 def get_account_merchants(connection, account_id: int) -> list[dict]:
     """
     Retrieve all distinct merchants used by an account.
-    """
 
-    cursor = connection.cursor()
+    Should return:
+    merchant id
+    merchant name
+
+    Order by:
+    merchant name
+    """

@@ -5,7 +5,7 @@ def set_budget(connection, account_id: int, category_id: int, monthly_limit: flo
     Returns the budget object
 
     Should return:
-    budget*
+    b.*
     account name
     category name
     """
@@ -159,8 +159,8 @@ def get_budget_remaining(connection, budget_id) -> dict | None:
     Should return:
     budget id
     monthly limit
-    COALESCED amount spent
-    COALESCED remaining
+    COALESCE transaction amount AS amount spent
+    monthly limit - COALESCE transaction amount AS amount spent
 
     Group by:
     budget id, monthly limit
